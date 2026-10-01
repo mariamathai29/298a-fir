@@ -55,6 +55,8 @@ The timeline is sourced from the course schedule, and consists of the following 
   <img src="gantt.png" width="1000">
 </p>
 
+At a high level, we aim to finish RTL design by Oct 17 (concurrent alongside verification), verification by Oct 17, implementation and timing by Oct 31, back annotation + synthesis + parasitic extraction by Nov 14.
+
 ### Maria Tasks
 
 **Create Repo**
