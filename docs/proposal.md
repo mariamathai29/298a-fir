@@ -4,8 +4,19 @@
 
 The purpose of this project is to design and implement a digital adaptive finite impulse response (FIR) filter with a sign-sign least-mean-squares (LMS) coefficient update engine, providing a general-purpose adaptive filtering architecture with applications in interference cancellation, including maternal heartbeat suppression in fetal electrocardiography as demonstrated by Widrow et al., in *Adaptive Noise Cancelling: Principles and Applications* (Figs. 14–15).
 
+<p align="center">
+  <img src="widrow.png" width="500">
+</p>
+
 ## System Diagram
 
+<p align="center">
+  <img src="diagrams_298.png" width="800">
+</p>
+
+<p align="center">
+  <img src="diagrams_298 copy.png" width="600">
+</p>
 
 ## Proposed Specifications
 
@@ -39,6 +50,10 @@ The timeline is sourced from the course schedule, and consists of the following 
 5. Implementation + timing verification
 6. DRC evaluation, synthesis, parasitic extraction
 7. GitHub Actions
+
+<p align="center">
+  <img src="gantt.png" width="1000">
+</p>
 
 ### Maria Tasks
 
