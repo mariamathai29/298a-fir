@@ -46,4 +46,88 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
+`ifndef GL_TEST
+  // ===========================================================================
+  // Unit-test instances for src/spi.v (used by test_spi_unit.py).
+  // RTL only: the gate-level netlist no longer contains these modules.
+  // They share `clk` with the top-level design and are otherwise independent.
+  // ===========================================================================
+
+  // ------------------------------------------------ spi_transmit on its own
+  reg        tx_rst_n;
+  reg        tx_load;
+  reg  [7:0] tx_d_a;
+  reg  [7:0] tx_d_b;
+  wire       tx_sclk;
+  wire       tx_fs;
+  wire [1:0] tx_sdo;
+
+  spi_transmit u_tx (
+      .clk   (clk),
+      .rst_n (tx_rst_n),
+      .load  (tx_load),
+      .d_a   (tx_d_a),
+      .d_b   (tx_d_b),
+      .sclk_o(tx_sclk),
+      .fs_o  (tx_fs),
+      .sdo   (tx_sdo)
+  );
+
+  // -------------------------------- spi_receive on its own (sclk/cs_n by test)
+  reg        rx_sclk;
+  reg        rx_cs_n;
+  reg        rx_rst_n;
+  reg        rx_mosi_u;
+  reg        rx_mosi_r;
+  wire       rx_d_tog;
+  wire [7:0] rx_d_hold_u;
+  wire [7:0] rx_d_hold_r;
+
+  spi_receive u_rx (
+      .sclk    (rx_sclk),
+      .cs_n    (rx_cs_n),
+      .rst_n   (rx_rst_n),
+      .mosi_u  (rx_mosi_u),
+      .mosi_r  (rx_mosi_r),
+      .d_tog   (rx_d_tog),
+      .d_hold_u(rx_d_hold_u),
+      .d_hold_r(rx_d_hold_r)
+  );
+
+  // ------------------------------------------------ spi_transmit -> spi_receive
+  // sdo[0] (d_a) -> mosi_u, sdo[1] (d_b) -> mosi_r, sclk_o -> sclk, fs_o -> cs_n
+  reg        lb_rst_n;
+  reg        lb_load;
+  reg  [7:0] lb_d_a;
+  reg  [7:0] lb_d_b;
+  wire       lb_sclk;
+  wire       lb_fs;
+  wire [1:0] lb_sdo;
+  wire       lb_d_tog;
+  wire [7:0] lb_d_hold_u;
+  wire [7:0] lb_d_hold_r;
+
+  spi_transmit u_lb_tx (
+      .clk   (clk),
+      .rst_n (lb_rst_n),
+      .load  (lb_load),
+      .d_a   (lb_d_a),
+      .d_b   (lb_d_b),
+      .sclk_o(lb_sclk),
+      .fs_o  (lb_fs),
+      .sdo   (lb_sdo)
+  );
+
+  spi_receive u_lb_rx (
+      .sclk    (lb_sclk),
+      .cs_n    (lb_fs),
+      .rst_n   (lb_rst_n),
+      .mosi_u  (lb_sdo[0]),
+      .mosi_r  (lb_sdo[1]),
+      .d_tog   (lb_d_tog),
+      .d_hold_u(lb_d_hold_u),
+      .d_hold_r(lb_d_hold_r)
+  );
+`endif
+
 endmodule

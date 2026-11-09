@@ -12,7 +12,12 @@ ifneq ($(GATES),yes)
 
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+# spi.v is needed by the unit-test instances in tb.v. It is added here only if
+# it is not already listed in PROJECT_SOURCES (defining the modules twice is an error).
+UNIT_SOURCES = $(filter-out $(PROJECT_SOURCES),spi.v)
+VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES) $(UNIT_SOURCES))
+# top-level tests + per-module SPI unit tests
+COCOTB_TEST_MODULES = test,test_spi_unit
 
 else
 
@@ -38,8 +43,10 @@ COMPILE_ARGS 		+= -I$(SRC_DIR)
 VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tb
 
-# List test modules to run, separated by commas and without the .py suffix:
-COCOTB_TEST_MODULES = test
+# List test modules to run, separated by commas and without the .py suffix.
+# (The RTL branch above also runs test_spi_unit; it is skipped at gate level
+# because the netlist does not contain spi_transmit / spi_receive.)
+COCOTB_TEST_MODULES ?= test
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
