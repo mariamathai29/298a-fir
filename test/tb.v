@@ -58,9 +58,10 @@ module tb ();
   reg        tx_load;
   reg  [7:0] tx_d_a;
   reg  [7:0] tx_d_b;
+  reg  [7:0] tx_d_c;
   wire       tx_sclk;
   wire       tx_fs;
-  wire [1:0] tx_sdo;
+  wire [2:0] tx_sdo;
 
   spi_transmit u_tx (
       .clk   (clk),
@@ -68,6 +69,7 @@ module tb ();
       .load  (tx_load),
       .d_a   (tx_d_a),
       .d_b   (tx_d_b),
+      .d_c   (tx_d_c),
       .sclk_o(tx_sclk),
       .fs_o  (tx_fs),
       .sdo   (tx_sdo)
@@ -96,13 +98,15 @@ module tb ();
 
   // ------------------------------------------------ spi_transmit -> spi_receive
   // sdo[0] (d_a) -> mosi_u, sdo[1] (d_b) -> mosi_r, sclk_o -> sclk, fs_o -> cs_n
+  // sdo[2] (d_c) is left unconnected since spi_receive only has two lanes
   reg        lb_rst_n;
   reg        lb_load;
   reg  [7:0] lb_d_a;
   reg  [7:0] lb_d_b;
+  reg  [7:0] lb_d_c;
   wire       lb_sclk;
   wire       lb_fs;
-  wire [1:0] lb_sdo;
+  wire [2:0] lb_sdo;
   wire       lb_d_tog;
   wire [7:0] lb_d_hold_u;
   wire [7:0] lb_d_hold_r;
@@ -113,6 +117,7 @@ module tb ();
       .load  (lb_load),
       .d_a   (lb_d_a),
       .d_b   (lb_d_b),
+      .d_c   (lb_d_c),
       .sclk_o(lb_sclk),
       .fs_o  (lb_fs),
       .sdo   (lb_sdo)

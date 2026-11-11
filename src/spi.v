@@ -65,25 +65,29 @@ module spi_transmit (
     input  wire        load,
     input  wire [7:0] d_a,
     input  wire [7:0] d_b,
+    input  wire [7:0] d_c,
     output reg         sclk_o,
     output reg         fs_o,
-    output wire [1:0]  sdo          // {b, a}
+    output wire [2:0]  sdo          // {c, b, a}
 );
 
   reg [7:0] d_a_hold;
   reg [7:0] d_b_hold;
+  reg [7:0] d_c_hold;
   reg [2:0] bit_counter;
   reg transmitting;
 
   // Continuous assignments for serial outputs
   assign sdo[0] = d_a_hold[0];
   assign sdo[1] = d_b_hold[0];
+  assign sdo[2] = d_c_hold[0];
 
   always @(posedge clk or negedge rst_n) 
   begin
     if (!rst_n) 
     begin
       fs_o          <= 1'h1;
+      d_c_hold      <= 8'h00;
       d_b_hold      <= 8'h00;
       d_a_hold      <= 8'h00;
       transmitting  <= 1'h0;
@@ -99,6 +103,7 @@ module spi_transmit (
         begin
           d_a_hold     <= d_a;
           d_b_hold     <= d_b;
+          d_c_hold     <= d_c;
           transmitting <= 1'h1;
           fs_o         <= 1'h0;
           bit_counter  <= 3'h0;
@@ -120,6 +125,7 @@ module spi_transmit (
           begin
             d_a_hold    <= {1'h0, d_a_hold[7:1]};
             d_b_hold    <= {1'h0, d_b_hold[7:1]};
+            d_c_hold    <= {1'h0, d_c_hold[7:1]};
             bit_counter <= bit_counter + 3'h1;
           end
         end
