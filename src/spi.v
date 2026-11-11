@@ -28,7 +28,6 @@ module spi_receive(
         shift_u <= 7'h00;
         shift_r <= 7'h00;
 
-        d_tog <= 1'h0;
         bit_counter <= 3'h0;
       end
     else
@@ -37,8 +36,6 @@ module spi_receive(
         shift_r <= {mosi_r, shift_r[6:1]};
 
         bit_counter <= bit_counter + 3'h1;
-
-        d_tog <= (bit_counter == 3'h7);
       end
   end
 
@@ -48,11 +45,15 @@ module spi_receive(
       begin
         d_hold_u <= 8'h00;
         d_hold_r <= 8'h00;
+
+        d_tog <= 1'h0;
       end
     else if (bit_counter == 3'h7)
       begin
         d_hold_u <= {mosi_u, shift_u};
         d_hold_r <= {mosi_r, shift_r};
+
+        d_tog <= ~d_tog;
       end
   end
   
