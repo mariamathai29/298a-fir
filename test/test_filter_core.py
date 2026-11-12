@@ -74,15 +74,10 @@ async def test_step_timing(dut):
     await tb.send(u, 0)
     rows = await tracer
 
-    # check controls hold same value
-    for row in rows:
-        assert len(set(row["go"])) == 1, f"go copies disagree: {row}"
-        assert len(set(row["rot"])) == 1, f"rot copies disagree: {row}"
-
     # step starts on the go cycle
-    first = next(i for i, row in enumerate(rows) if row["go"][0])
+    first = next(i for i, row in enumerate(rows) if row["go"])
     step = rows[first:first + STEP_CLK]
-    assert sum(row["go"][0] for row in rows) == 1, "go must pulse once"
+    assert sum(row["go"] for row in rows) == 1, "go must pulse once"
 
     # verify number of cycles spent in each state matches expected
     expect = ([(S_IDLE, None)] + [(S_MAC, k) for k in range(17)] +
@@ -93,9 +88,9 @@ async def test_step_timing(dut):
     assert rows[first + STEP_CLK]["state"] == S_IDLE, "not idle after 23 clk"
 
     # 20 rotations, in MAC 0-15 and UPD 0-3 only
-    rot = [row["rot"][0] for row in step]
+    rot = [row["rot"] for row in step]
     assert rot == [0] + [1] * 16 + [0, 0] + [1] * 4, f"rot pattern {rot}"
-    assert sum(row["rot"][0] for row in rows) == 20
+    assert sum(row["rot"] for row in rows) == 20
 
     # transmit load signal on first update cycle
     loads = [i for i, row in enumerate(rows) if row["tx_load"]]

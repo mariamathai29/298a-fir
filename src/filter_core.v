@@ -30,7 +30,7 @@ module filter_core (
     reg [1:0] cur, next, digit_q; // current state, next state, digit group
     reg [4:0] cnt, cnt_n; // mac and update count (next)
 
-    wire go_f; // go signal for fsm
+    reg go, rot;
 
     // next state logic
     always @(*) begin
@@ -39,7 +39,7 @@ module filter_core (
 
         case (cur)
             S_IDLE:
-                if (go_f) begin
+                if (go) begin
                     next = S_MAC;
                     cnt_n = 5'd0;
                 end 
@@ -86,25 +86,15 @@ module filter_core (
     wire rot_n = ((next == S_MAC) && (!(cnt_n[4]))) || (next == S_UPD); 
     wire load_n = (next == S_UPD) && (cnt_n == 5'd0);
 
-    wire [1:0] rot_x, go_x;
-    wire [3:0] rot_w;
-    wire go_a;
-
-    genvar i;
-    generate
-        // drive rotation and input signals for taps
-        for (i=0; i<2; i=i+1) begin: gen_x
-            ctl_ff u_rot (.clk(clk), .rst_n(~rst), .d(rot_n), .q(rot_x[i]));
-            ctl_ff u_go  (.clk(clk), .rst_n(~rst), .d(go_n),  .q(go_x[i]));
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            go <= 1'b0;
+            rot <= 1'b0;
+        end else begin
+            go <= go_n;
+            rot <= rot_n;
         end
-        // drive rotation signals for weights
-        for (i=0; i<4; i=i+1) begin: gen_w
-            ctl_ff u_rot (.clk(clk), .rst_n(~rst), .d(rot_n), .q(rot_w[i]));
-        end
-    endgenerate
-
-    ctl_ff u_go_a (.clk(clk), .rst_n(~rst), .d(go_n), .q(go_a)); // datapath
-    ctl_ff u_go_f (.clk(clk), .rst_n(~rst), .d(go_n), .q(go_f)); // FSM, flags
+    end
 
     reg transmit_q;
     always @(posedge clk or posedge rst) begin
@@ -130,10 +120,10 @@ module filter_core (
         if (rst) begin
             x[0] <= 8'sd0;
             x[1] <= 8'sd0;
-        end else if (go_x[0]) begin
+        end else if (go) begin
             x[0] <= d_u;
             x[1] <= x[0];
-        end else if (rot_x[0]) begin
+        end else if (rot) begin
             x[0] <= x[1];
             x[1] <= x[2];
         end
@@ -143,10 +133,10 @@ module filter_core (
         if (rst) begin
             x[2] <= 8'sd0;
             x[3] <= 8'sd0;
-        end else if (go_x[1]) begin
+        end else if (go) begin
             x[2] <= x[1];
             x[3] <= x[2];
-        end else if (rot_x[1]) begin
+        end else if (rot) begin
             x[2] <= x[3];
             x[3] <= x[0];
         end
@@ -160,10 +150,10 @@ module filter_core (
             w[2] <= 14'sd0;
             w[3] <= 14'sd0;
         end else begin
-            w[0] <= rot_w[0] ? w[1] : w[0];
-            w[1] <= rot_w[1] ? w[2] : w[1];
-            w[2] <= rot_w[2] ? w[3] : w[2];
-            w[3] <= rot_w[3] ? (w_write ? w_new : w[0]) : w[3];
+            w[0] <= rot ? w[1] : w[0];
+            w[1] <= rot ? w[2] : w[1];
+            w[2] <= rot ? w[3] : w[2];
+            w[3] <= rot ? (w_write ? w_new : w[0]) : w[3];
         end
     end
 
@@ -195,8 +185,8 @@ module filter_core (
     wire signed [19:0] acc_n = horner ? (acc_sum << 2) : acc_sum; // (((PP3)*4+PP2)*4+PP1)*4+PP0
 
     always @(posedge clk) begin
-        acc <= go_a ? 20'sd2 : acc_n;    // 2 * 4^3 = 128: round half up
-        pp_q <= go_a ? 12'sd0 : pp;
+        acc <= go ? 20'sd2 : acc_n;    // 2 * 4^3 = 128: round half up
+        pp_q <= go ? 12'sd0 : pp;
         horner <= mac_go && (cnt[1:0] == 2'd3) && (cnt[3:2] != 2'd3);
     end
 
@@ -234,7 +224,7 @@ module filter_core (
     wire e_neg = y_sat_hi ? (r_q != 8'sd127) : y_sat_lo ? 1'b0 : (r_q < y_plain);
 
     always @(posedge clk) begin
-        if (go_a)
+        if (go)
             r_q <= d_r;
         if (cur == S_FIN) begin
             y_q <= y;
@@ -317,7 +307,7 @@ module filter_core (
             ovf_flag <= 1'b0; // a sample arrived while a step was running
             sat_flag <= 1'b0; // y, e or a weight saturated
         end else begin
-            if (d_stb && !go_f) begin
+            if (d_stb && !go) begin
                 ovf_flag <= 1'b1;
             end
             if (cur == S_FIN && (y_sat_hi || y_sat_lo || e_sat_hi || e_sat_lo)) begin

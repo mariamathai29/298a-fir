@@ -6,7 +6,7 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v spi.v filter_core.v ctl_ff.v
+PROJECT_SOURCES = filter_top.v spi.v filter_core.v
 
 ifneq ($(GATES),yes)
 
@@ -16,8 +16,6 @@ SIM_BUILD				= sim_build/rtl
 # it is not already listed in PROJECT_SOURCES (defining the modules twice is an error).
 # UNIT_SOURCES = $(filter-out $(PROJECT_SOURCES),spi.v)
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES)) # $(UNIT_SOURCES))
-
-COMPILE_ARGS    += -DAF_BEHAVIORAL_FF
 
 # top-level tests + per-module SPI unit tests
 COCOTB_TEST_MODULES = test,test_spi_unit
@@ -57,8 +55,8 @@ TOPLEVEL = tb
 ifeq ($(SUITE),core)
 SIM_BUILD = sim_build/core
 COCOTB_RESULTS_FILE       = results_core.xml
-VERILOG_SOURCES           = $(SRC_DIR)/filter_core.v $(SRC_DIR)/ctl_ff.v 
-COMPILE_ARGS              = -DAF_BEHAVIORAL_FF
+VERILOG_SOURCES           = $(SRC_DIR)/filter_core.v
+COMPILE_ARGS              =
 COCOTB_HDL_TIMEUNIT       = 1ns
 COCOTB_HDL_TIMEPRECISION  = 1ps
 TOPLEVEL                  = filter_core
