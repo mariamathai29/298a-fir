@@ -160,33 +160,33 @@ module filter_core (
     /////////////////
     // COMPUTE MAC
     /////////////////
-    reg signed [19:0] acc; // 5.15 accumulate
-    reg signed [11:0] pp_q; // registered partial prod result
+    reg signed [23:0] acc; // 5.15 accumulate
+    reg signed [15:0] pp_q; // registered partial prod result
     reg horner;
 
     wire mac_go = (cur == S_MAC) && !cnt[4];
     wire [8:0] x0_ext = {x[0], 1'b0}; // extend multiplicand
     wire [2:0] booth_groups = x0_ext[{1'b0, digit_q, 1'b0} +: 3]; // booth grouping per pp
 
-    wire signed [9:0] w0_mul = w[0][13:4]; // drop four lowest bits
-    reg signed [11:0] pp; // partial prod result (comb)
+    wire signed [13:0] w0_mul = w[0];
+    reg signed [15:0] pp; // partial prod result (comb)
 
     always @(*) begin
         case(booth_groups)
-            3'b001, 3'b010: pp = {{2{w0_mul[9]}}, w0_mul};       // X
-            3'b011: pp = {w0_mul[9], w0_mul, 1'b0};              // 2X
-            3'b100: pp = -{w0_mul[9], w0_mul, 1'b0};             // -2X
-            3'b101, 3'b110: pp = -{{2{w0_mul[9]}}, w0_mul};      // -X
-            default: pp = 12'sd0;                                //  0
+            3'b001, 3'b010: pp = {{2{w0_mul[13]}}, w0_mul};       // X
+            3'b011: pp = {w0_mul[13], w0_mul, 1'b0};              // 2X
+            3'b100: pp = -{w0_mul[13], w0_mul, 1'b0};             // -2X
+            3'b101, 3'b110: pp = -{{2{w0_mul[13]}}, w0_mul};      // -X
+            default: pp = 16'sd0;                                //  0
         endcase
     end
 
-    wire signed [19:0] acc_sum = acc + {{8{pp_q[11]}}, pp_q}; // sign extend for pp sum
-    wire signed [19:0] acc_n = horner ? (acc_sum << 2) : acc_sum; // (((PP3)*4+PP2)*4+PP1)*4+PP0
+    wire signed [23:0] acc_sum = acc + {{8{pp_q[15]}}, pp_q}; // sign extend for pp sum
+    wire signed [23:0] acc_n = horner ? (acc_sum << 2) : acc_sum; // (((PP3)*4+PP2)*4+PP1)*4+PP0
 
     always @(posedge clk) begin
-        acc <= go ? 20'sd2 : acc_n;    // 2 * 4^3 = 128: round half up
-        pp_q <= go ? 12'sd0 : pp;
+        acc <= go ? 24'sd32 : acc_n;    // 32 * 4^3 = 2^11: round half up
+        pp_q <= go ? 16'sd0 : pp;
         horner <= mac_go && (cnt[1:0] == 2'd3) && (cnt[3:2] != 2'd3);
     end
 
@@ -197,7 +197,7 @@ module filter_core (
     reg signed [7:0] r_q, y_q, e_q; // interfered signal, fir transfer, error regs
     reg e_pos_q, e_neg_q; // error sign
 
-    wire signed [11:0] acc_y = acc[19:8];
+    wire signed [11:0] acc_y = acc[23:12];
 
     // check y saturation
     wire y_sat_hi = !acc_y[11] && (|acc_y[10:7]);

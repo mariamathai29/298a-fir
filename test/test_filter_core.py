@@ -139,10 +139,11 @@ async def test_rounding(dut):
     # check MAC rounding, 1.7 x 2.8 = 3.15, drop 8 frac
     tb = AfCoreTB(dut)
     await tb.reset()
+    rng = random.Random(2)
+    edges = [b + d for b in (-6144, -2048, 2048, 6144) for d in (-1, 0, 1)]
     for xv in (1, -1):
-        for wm in range(-512, 512):
-            await check_step(tb, [xv, 0, 0, 0], [wm << 4, 0, 0, 0], 0)
-
+        for wv in [(wm << 4) | rng.randint(0, 15) for wm in range(-512, 512)] + edges:
+            await check_step(tb, [xv, 0, 0, 0], [wv, 0, 0, 0], 0)
 
 @cocotb.test()
 async def test_saturation(dut):

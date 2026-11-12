@@ -53,11 +53,11 @@ class AdaptiveFilter:
         self.x = [u] + self.x[:-1]
         acc = 0
         for k in range(N_TAPS):
-            acc += check(self.x[k] * (self.w[k] >> W_EXT), 18, "product")
-        check(acc, 21, "acc")
+            acc += check(self.x[k] * self.w[k], 22, "product")
+        check(acc, 24, "acc")
 
-        # Q6.15 -> Q1.7: round half up (add 2^7, drop 8 LSBs), saturate to 8 bits
-        y, s1 = sat((acc + (1 << 7)) >> 8, 8)
+        # Q5.19 -> Q1.7: round half up (add 2^7, drop 8 LSBs), saturate to 8 bits
+        y, s1 = sat((acc + (1 << 11)) >> 12, 8)
 
         e_cue = check(r - y, 9, "e_int")
         e_out, s2 = sat(e_cue, 8)
