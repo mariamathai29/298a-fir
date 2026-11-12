@@ -17,7 +17,7 @@
 // uio   : [0] adapt_en (in)
 //         [3:1] mu_sel (in)
 
-module filter_top (
+module tt_um_filter_top (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
